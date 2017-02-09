@@ -178,15 +178,17 @@ class EditPost(BlogHandler):
     def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
-
-        if self.user:
-            if post.author.id() != self.author.key().id():
-                self.redirect('/blog/%s' % str(post.key.id()))
+        if post:
+            if self.user:
+                if post.author.key().id() != self.user.key().id():
+                    self.redirect('/blog/%s' % str(post.key.id()))
+                else:
+                    self.render("editpost.html", subject=post.subject, content=post.content)
             else:
-                self.render("editpost.html", subject=post.subject, content=post.content)
+                error = 'You must be logged in to edit post.'
+                self.render('login.html', error=error)
         else:
-            error = 'You must be logged in to edit post.'
-            self.render('login.html', error=error)
+            self.write("post not found")
 
 
     def post(self, post_id):
@@ -217,7 +219,7 @@ class DeletePost(BlogHandler):
             self.error(404)
             return
         if self.user:
-            self.render(deletepost.html, post=post)
+            self.render("deletepost.html", post=post)
         else:
             error = 'You must be logged in to delete this post.'
             self.render('login-form.html', error=error)
@@ -228,8 +230,8 @@ class DeletePost(BlogHandler):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
-        if post and (post.author.id() == self.user.key().id()):
-            post.key.delete()
+        if post and (post.author.key() == self.user.key()):
+            db.delete(post)
         self.redirect('/')
 
 class Like(db.Model):
@@ -319,12 +321,12 @@ class CreateComment(BlogHandler):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
-        if not post:
+        if not post or not self.user:
             self.redirect('/')
-
+        print self.user.name
         content = self.request.get('comment')
         if content:
-            comment = Comment(post=post.key, content=content, author=post.author.key())
+            comment = Comment(post=post.key(), content=content, author=self.user.key())
             comment.put()
             self.redirect('/blog/%s' % str(post_id))
         else:
