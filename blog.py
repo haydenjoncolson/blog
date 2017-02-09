@@ -153,7 +153,7 @@ class PostPage(BlogHandler):
 class NewPost(BlogHandler):
     def get(self):
         if self.user:
-            author = post.author.key()
+            author = self.user.key()
             self.render("newpost.html", author=author)
         else:
             self.redirect("/login")
@@ -164,7 +164,7 @@ class NewPost(BlogHandler):
 
         subject = self.request.get('subject')
         content = self.request.get('content')
-        author = post.author.key()
+        author = self.user.key()
 
         if subject and content:
             p = Post(parent = blog_key(), subject = subject, content = content, author = author)
@@ -180,7 +180,7 @@ class EditPost(BlogHandler):
         post = db.get(key)
 
         if self.user:
-            if post.author.id() != post.author.key().id():
+            if post.author.id() != self.author.key().id():
                 self.redirect('/blog/%s' % str(post.key.id()))
             else:
                 self.render("editpost.html", subject=post.subject, content=post.content)
@@ -228,9 +228,14 @@ class DeletePost(BlogHandler):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
-        if post and (post.author.id() == post.author.key().id()):
+        if post and (post.author.id() == self.user.key().id()):
             post.key.delete()
         self.redirect('/')
+
+class Like(db.Model):
+    post = db.ReferenceProperty(Post)
+    author = db.ReferenceProperty(User)
+    count = 0
 
 class LikePost(BlogHandler):
     def get(self, post_id):
