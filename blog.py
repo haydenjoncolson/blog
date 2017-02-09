@@ -126,7 +126,9 @@ class Post(db.Model):
     content = db.TextProperty(required = True)
     created = db.DateTimeProperty(auto_now_add = True)
     last_modified = db.DateTimeProperty(auto_now = True)
-    author = db.StringProperty(required=False)
+    #author = db.StringProperty(required=False)
+    author = db.ReferenceProperty(User)
+
 
     def render(self):
         self._render_text = self.content.replace('\n', '<br>')
@@ -151,7 +153,7 @@ class PostPage(BlogHandler):
 class NewPost(BlogHandler):
     def get(self):
         if self.user:
-            author = self.user.name
+            author = self.user.key()
             self.render("newpost.html", author=author)
         else:
             self.redirect("/login")
@@ -162,7 +164,7 @@ class NewPost(BlogHandler):
 
         subject = self.request.get('subject')
         content = self.request.get('content')
-        author = self.user.name
+        author = self.user.key()
 
         if subject and content:
             p = Post(parent = blog_key(), subject = subject, content = content, author = author)
@@ -178,7 +180,7 @@ class EditPost(BlogHandler):
         post = db.get(key)
 
         if self.user:
-            if post.author.id() != self.user.key.id():
+            if post.author.id() != self.user.key().id():
                 self.redirect('/blog/%s' % str(post.key.id()))
             else:
                 self.render("editpost.html", subject=post.subject, content=post.content)
@@ -242,21 +244,21 @@ class LikePost(BlogHandler):
 
         likes = Like.query(Like.post == post.key).get()
 
-        if post.author == self.user.name:
+        if post.author == self.user.key():
             self.write("You can't like your own post")
         else:
             if likes:
                 authors = likes.authors
                 for author in authors:
-                    if (author == self.user.name):
+                    if (author == self.user.key()):
                         self.redirect('/blog/%s' % str(post.key.id()))
                 likes.count += 1
-                authors.append(self.user.name)
+                authors.append(self.user.key())
                 likes.put()
                 self.redirect('/')
             else:
                 likes = Like(post=post.key, count=1)
-                likes.author.append(self.user.name)
+                likes.author.append(self.user.key())
                 likes.put()
                 self.redirect('/')
 
@@ -276,7 +278,7 @@ class UnlikePost(BlogHandler):
         if likes:
             authors = likes.author
             for author in authors:
-                if author == self.user.name:
+                if author == self.user.key():
                     likes.author.remove(author)
                     flag = True
                 if not flag:
@@ -285,6 +287,8 @@ class UnlikePost(BlogHandler):
                     self.error(404)
         else:
             self.error(404)
+
+
 
 
 class CreateComment(BlogHandler):
@@ -305,7 +309,7 @@ class CreateComment(BlogHandler):
 
         content = self.request.get('comment')
         if content:
-            comment = Comment(post=post.key, content=content, author=self.user.name)
+            comment = Comment(post=post.key, content=content, author=self.user.key())
             comment.put()
             self.redirect('/blog/%s' % str(post_id))
         else:
@@ -354,7 +358,7 @@ class DeleteComment(BlogHandler):
             self.error(404)
 
         if self.user:
-            self.render('deletecomment.html', author=self.user.name)
+            self.render('deletecomment.html', author=self.user.key())
         else:
             self.redirect('/login')
 
@@ -364,8 +368,8 @@ class DeleteComment(BlogHandler):
         key = ndb.Key.from_path('Comment', int(comment_id))
         comment = db.get(key)
 
-        if comment and comment.author.id() == self.user.key.id():
-            comment.key.delete()
+        if comment and comment.author.id() == self.user.key().id():
+            comment.key().delete()
         self.redirect('/')
 
 
