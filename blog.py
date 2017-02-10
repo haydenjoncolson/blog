@@ -121,6 +121,8 @@ class User(db.Model):
 def blog_key(name = 'default'):
     return db.Key.from_path('blogs', name)
 
+
+
 class Post(db.Model):
     subject = db.StringProperty(required = True)
     content = db.TextProperty(required = True)
@@ -128,11 +130,24 @@ class Post(db.Model):
     last_modified = db.DateTimeProperty(auto_now = True)
     #author = db.StringProperty(required=False)
     author = db.ReferenceProperty(User)
+    likes = db.IntegerProperty(default=0)
+
 
 
     def render(self):
         self._render_text = self.content.replace('\n', '<br>')
         return render_str("post.html", p = self)
+    @property
+    def comments(self):
+        comments = Comment.all().filter(Comment.post.key(), self.key)
+        return comments
+
+class Comment(db.Model):
+    post = db.ReferenceProperty(Post)
+    content = db.TextProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
+    last_modified = db.DateTimeProperty(auto_now=True)
+    author =  db.ReferenceProperty(User)
 
 class BlogFront(BlogHandler):
     def get(self):
@@ -143,6 +158,9 @@ class PostPage(BlogHandler):
     def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
+
+        comments = db.GqlQuery(
+            "SELECT * FROM Comment WHERE ancestor is :1 ORDER BY created DESC LIMIT 5", key)
 
         if not post:
             self.error(404)
@@ -234,161 +252,71 @@ class DeletePost(BlogHandler):
             db.delete(post)
         self.redirect('/blog')
 
-class Like(db.Model):
-    post = db.ReferenceProperty(Post)
-    author = db.ReferenceProperty(User)
-    count = 0
-
-class LikePost(BlogHandler):
-    def get(self, post_id):
-        if not self.user:
-            self.redirect('/login')
-        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(key)
-
-        if not post:
-            self.error(404)
-
-        likes = Like.query(Like.post == post.key).get()
-
-        if post.author == post.author.key():
-            self.write("You can't like your own post")
-        else:
-            if likes:
-                authors = likes.authors
-                for author in authors:
-                    if (author == post.author.key()):
-                        self.redirect('/blog/%s' % str(post.key().id()))
-                likes.count += 1
-                authors.append(post.author.key())
-                likes.put()
-                self.redirect('/blog')
-            else:
-                likes = Like(post=post.key, count=1)
-                likes.author.append(post.author.key())
-                likes.put()
-                self.redirect('/blog')
-
-class UnlikePost(BlogHandler):
-    def get(self, post_id):
-        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(key)
-
-        if not post:
-            self.error(404)
-
-        if not self.user:
-            self.redirect('/login')
-
-        likes = Like.query(Like.post == post.key).get()
-
-        if likes:
-            authors = likes.author
-            for author in authors:
-                if author == post.author.key():
-                    likes.author.remove(author)
-                    flag = True
-                if not flag:
-                    self.redirect('/blog/%s' % str(post.key.id()))
-                else:
-                    self.error(404)
-        else:
-            self.error(404)
-
 class Comment(db.Model):
     post = db.ReferenceProperty(Post)
-    content = db.TextProperty(required = True)
-    created = db.DateTimeProperty(auto_now_add = True)
-    last_modified = db.DateTimeProperty(auto_now = True)
-    #author = db.StringProperty(required=False)
-    author = db.ReferenceProperty(User)
+    content = db.TextProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
+    last_modified = db.DateTimeProperty(auto_now=True)
+    author =  db.ReferenceProperty(User)
 
-    def render(self):
-        self._render_text = self.content.replace('\n', '<br>')
-        return render_str("comment.html", p = self)
 
 
 class CreateComment(BlogHandler):
     def get(self, post_id):
-        if self.user:
-            self.render('editcomment.html')
-        else:
+        if not self.user:
             self.redirect('/login')
+        else:
+            self.render('addcomment.html')
 
     def post(self, post_id):
         if not self.user:
-            self.redirect('/login')
+            return self.redirect('/login')
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
-        if not post or not self.user:
-            self.redirect('/')
-        print self.user.name
-        content = self.request.get('comment')
+        if not post:
+            return self.redirect('/blog')
+        content = self.request.get('content')
+        author = self.user.key()
         if content:
-            comment = Comment(post=post.key(), content=content, author=self.user.key())
-            comment.put()
+            c = Comment(parent=key, content=content, author=author)
+            c.put()
             self.redirect('/blog/%s' % str(post_id))
         else:
             error = 'Please enter a valid comment.'
-            self.render('editcomment.html', error=error)
+            self.render('editcomment.html', content=content, error=error)
 
 class EditComment(BlogHandler):
-    def get(self, comment_id):
-        key = db.Key.from_path('Comment', int(comment_id))
-        comment = db.get(key)
+    def get(self, post_id, comment_id):
+        comment_key = db.Key.from_path('Comment', int(comment_id), parent=post_key())
+        comment = db.get(comment_key)
 
-        if not comment:
-            self.error(404)
-
-        if self.user:
+        if not self.user:
+            self.redirect('/login')
+        else:
             self.render('editcomment.html', content=comment.content)
-        else:
-            self.redirect('/login')
 
-    def post(self, comment_id):
+    def post(self, post_id, comment_id):
         if not self.user:
-            self.redirect('/login')
-        key = db.Key.from_path('Comment', int(comment_id))
-        comment = db.get(key)
-        content = self.request.get('comment')
+            self.redirect('/blog')
+        comment_key = db.Key.from_path('Comment', int(comment_id), parent=post_key())
+        comment = db.get(comment_key)
 
-        if content:
-            if comment.author.id() == post.author.key().id():
-                comment.content = content
-                comment.put()
-                self.redirect('blog/%s' % str(comment.post.id()))
+        if self.user.key().id() == comment.author.key().id():
+            content = self.request.get('content')
+            author = self.user.key()
+            if content:
+                c = Comment(parent=key, content=content, author=author)
+                c.put()
+                self.redirect('/blog/%s' % str(post_id))
             else:
-                error = 'You did not write this comment.'
+                error = 'Please enter a valid comment.'
                 self.render('editcomment.html', content=comment.content, error=error)
-        else:
-            error = 'Please enter a valid comment.'
-            self.render('editcomment.html', content=comment.content, error=error)
 
-class DeleteComment(BlogHandler):
-    def get(self, comment_id):
-        key = db.Key.from_path('Comment', int(comment_id))
-        comment = db.get(key)
-        content = self.request.get('comment')
-
-        if not comment:
-            self.error(404)
-
-        if self.user:
-            self.render('deletecomment.html', author=post.author.key())
-        else:
-            self.redirect('/login')
-
-    def post(self, comment_id):
-        if not self.user:
-            self.redirect('/login')
-        key = db.Key.from_path('Comment', int(comment_id))
-        comment = db.get(key)
-
-        if comment and comment.author.id() == post.author.key().id():
-            comment.key().delete()
-        self.redirect('/')
-
+class Like(db.Model):
+    author = db.ReferenceProperty(User)
+    post = db.ReferenceProperty(Post)
+    likes = db.IntegerProperty()
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 def valid_username(username):
@@ -482,11 +410,11 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                ('/blog/newpost', NewPost),
                                ('/blog/editpost/([0-9]+)', EditPost),
                                ('/blog/deletepost/([0-9]+)', DeletePost),
-                               ('/blog/likepost/([0-9]+)', LikePost),
-                               ('/blog/unlikepost/([0-9]+)', UnlikePost),
-                               ('/blog/comment/([0-9]+)', CreateComment),
-                               ('/blog/editcomment/([0-9]+)', EditComment),
-                               ('/blog/deletecomment/([0-9]+)', DeleteComment),
+                              # ('/blog/likepost/([0-9]+)', LikePost),
+                              # ('/blog/unlikepost/([0-9]+)', UnlikePost),
+                               ('/blog/([0-9]+)/newcomment/', CreateComment),
+                               ('/blog/([0-9]+)/editcomment/([0-9]+)', EditComment),
+                              # ('/blog/([0-9]+)/deletecomment/([0-9]+)', DeleteComment),
                                ('/signup', Register),
                                ('/login', Login),
                                ('/logout', Logout)

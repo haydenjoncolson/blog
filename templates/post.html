@@ -16,18 +16,17 @@
   <div>
     <a href="/blog/editpost/{{p.key().id()}}">Edit</a>
     <a href="/blog/deletepost/{{p.key().id()}}">Delete</a>
-    <a href="/blog/comment/{{p.key().id()}}">Comment</a>
+    <a href="/blog/{{p.key().id()}}/newcomment/">Comment</a>
     <a href="/blog/likepost/{{p.key().id()}}">Like</a>
     <a href="/blog/unlikepost/{{p.key().id()}}">Unlike</a>
   </div>
   {% for comment in p.comments %}
   <div>
     {{comment.content}}
-    {% set commentAuthor = (comment.author.get()).name %}
-    {% if commentAuthor %}
-    <a href="/blog/editcomment/{{comment.key().id()}}">Edit</a>
-    <a href="/blog/deletecomment/{{comment.key().id()}}">Edit</a>
-    {% endif %}
+
+    <a href="/blog/{{p.key().id()}}/editcomment/{{comment.key().id()}}">Edit</a>
+    <a href="/blog/{{p.key().id()}}/deletecomment/{{comment.key().id()}}">Delete</a>
+    
   </div>
   {% endfor %}
 </div>
