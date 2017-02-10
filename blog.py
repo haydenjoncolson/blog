@@ -181,12 +181,12 @@ class EditPost(BlogHandler):
         if post:
             if self.user:
                 if post.author.key().id() != self.user.key().id():
-                    self.redirect('/blog/%s' % str(post.key.id()))
+                    self.redirect('/blog/%s' % str(post.key().id()))
                 else:
                     self.render("editpost.html", subject=post.subject, content=post.content)
             else:
                 error = 'You must be logged in to edit post.'
-                self.render('login.html', error=error)
+                self.render('login-form.html', error=error)
         else:
             self.write("post not found")
 
@@ -205,7 +205,7 @@ class EditPost(BlogHandler):
             post.subject = subject
             post.content = content
             post.put()
-            self.redirect('/')
+            self.redirect('/blog')
         else:
             error = "subject and content, please!"
             self.render("editpost.html", subject=subject,
@@ -232,7 +232,7 @@ class DeletePost(BlogHandler):
 
         if post and (post.author.key() == self.user.key()):
             db.delete(post)
-        self.redirect('/')
+        self.redirect('/blog')
 
 class Like(db.Model):
     post = db.ReferenceProperty(Post)
@@ -258,16 +258,16 @@ class LikePost(BlogHandler):
                 authors = likes.authors
                 for author in authors:
                     if (author == post.author.key()):
-                        self.redirect('/blog/%s' % str(post.key.id()))
+                        self.redirect('/blog/%s' % str(post.key().id()))
                 likes.count += 1
                 authors.append(post.author.key())
                 likes.put()
-                self.redirect('/')
+                self.redirect('/blog')
             else:
                 likes = Like(post=post.key, count=1)
                 likes.author.append(post.author.key())
                 likes.put()
-                self.redirect('/')
+                self.redirect('/blog')
 
 class UnlikePost(BlogHandler):
     def get(self, post_id):
