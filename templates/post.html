@@ -1,7 +1,7 @@
 <div class="post">
   <div class="post-heading">
     <div class="post-title">
-      {{p.subject}} <span class="post-author">written by: {{p.author.name}}</span>
+      <a href="/blog/{{p.key().id()}}"></a> <span class="post-author">written by: {{p.author.name}}</span>
     </div>
 
 
@@ -17,16 +17,16 @@
     <a href="/blog/editpost/{{p.key().id()}}">Edit</a>
     <a href="/blog/deletepost/{{p.key().id()}}">Delete</a>
     <a href="/blog/{{p.key().id()}}/newcomment/">Comment</a>
-    <a href="/blog/likepost/{{p.key().id()}}">Like</a>
-    <a href="/blog/unlikepost/{{p.key().id()}}">Unlike</a>
+    <a href="/blog/{{p.key().id()}}/likepost/">Like</a>
+    <a href="/blog/{{p.key().id()}}/unlikepost/">Unlike</a>
   </div>
-  {% for comment in p.comments %}
-  <div>
-    {{comment.content}}
 
-    <a href="/blog/{{p.key().id()}}/editcomment/{{comment.key().id()}}">Edit</a>
-    <a href="/blog/{{p.key().id()}}/deletecomment/{{comment.key().id()}}">Delete</a>
-    
+  <div>
+    {{c.render | safe}}
+
+    <a href="/blog/{{p.key().id()}}/editcomment/{{c.key().id()}}">Edit</a>
+    <a href="/blog/{{p.key().id()}}/deletecomment/{{c.key().id()}}">Delete</a>
+
   </div>
-  {% endfor %}
+
 </div>

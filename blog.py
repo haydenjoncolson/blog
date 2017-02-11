@@ -137,10 +137,7 @@ class Post(db.Model):
     def render(self):
         self._render_text = self.content.replace('\n', '<br>')
         return render_str("post.html", p = self)
-    @property
-    def comments(self):
-        comments = Comment.all().filter(Comment.post.key(), self.key)
-        return comments
+
 
 class Comment(db.Model):
     post = db.ReferenceProperty(Post)
@@ -148,25 +145,28 @@ class Comment(db.Model):
     created = db.DateTimeProperty(auto_now_add=True)
     last_modified = db.DateTimeProperty(auto_now=True)
     author =  db.ReferenceProperty(User)
+    def render(self):
+        return render_str("post.html", c = self)
 
 class BlogFront(BlogHandler):
     def get(self):
         posts = greetings = Post.all().order('-created')
+        # comments = Comment.all().order('-created')
         self.render('front.html', posts = posts)
 
 class PostPage(BlogHandler):
     def get(self, post_id):
-        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(key)
-
-        comments = db.GqlQuery(
-            "SELECT * FROM Comment WHERE ancestor is :1 ORDER BY created DESC LIMIT 5", key)
+        post_key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(post_key)
+        comments = Comment.all().order('-created')
+        # comment_key = db.Key.from_path('Comment', int(post_id), parent=post_key)
+        # comments = db.get(comment_key)
 
         if not post:
             self.error(404)
             return
 
-        self.render("permalink.html", post = post)
+        self.render("permalink.html", post = post, comment = comments)
 
 class NewPost(BlogHandler):
     def get(self):
