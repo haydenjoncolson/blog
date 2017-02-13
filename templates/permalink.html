@@ -3,15 +3,19 @@
 {% block content %}
   {{post.render() | safe}}
   {% if comments %}
+
+
   {% for c in comments %}
     <div>
-      {{ c.content }}
+      {{ c.comment }}
     </div>
     <div>
-      <a href="/blog/{{p.key().id()}}/editcomment/{{c.key().id()}}">Edit</a>
-      <a href="/blog/{{p.key().id()}}/deletecomment/{{c.key().id()}}">Delete</a>
+      <a href="/blog/{{c.post.key().id()}}/editcomment/{{c.key().id()}}">Edit</a>
+      <a href="/blog/{{c.post.key().id()}}/deletecomment/{{c.key().id()}}">Delete</a>
     </div>
 
   {% endfor %}
-  {% endif %}
+{% else %}
+<h1>no comment</h1>
+{% endif %}
 {% endblock %}

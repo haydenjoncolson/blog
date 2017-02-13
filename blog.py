@@ -141,12 +141,12 @@ class Post(db.Model):
 
 class Comment(db.Model):
     post = db.ReferenceProperty(Post)
-    content = db.TextProperty(required=True)
+    comment = db.TextProperty(required=True)
     created = db.DateTimeProperty(auto_now_add=True)
     last_modified = db.DateTimeProperty(auto_now=True)
     author =  db.ReferenceProperty(User)
-    def render(self):
-        return render_str("post.html", c = self)
+    # def render(self):
+    #     #return render_str("post.html", c = self)
 
 class BlogFront(BlogHandler):
     def get(self):
@@ -158,12 +158,11 @@ class PostPage(BlogHandler):
     def get(self, post_id):
         post_key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(post_key)
-        comments = Comment.all().filter('post_key =', post_key)
-
-
         if not post:
             self.error(404)
             return
+        print post.content
+        comments = Comment.all().filter('post =', post_key)
 
         self.render("permalink.html", post = post, comments = comments)
 
@@ -272,27 +271,36 @@ class CreateComment(BlogHandler):
         content = self.request.get('content')
         author = self.user.key()
         if content:
-            c = Comment(parent=key, content=content, author=author)
+            c = Comment(parent=key, post=key, comment=content, author=author)
             c.put()
             self.redirect('/blog/%s' % str(post_id))
         else:
             error = 'Please enter a valid comment.'
-            self.render('editcomment.html', content=content, error=error)
+            self.render('addcomment.html', content=content, error=error)
 
 class EditComment(BlogHandler):
     def get(self, post_id, comment_id):
-        comment_key = db.Key.from_path('Comment', int(comment_id), parent=post_key())
-        comment = db.get(comment_key)
-
+        #comment_key = db.Key.from_path('Comment', int(comment_id), parent=blog_key())
+        #comment = Comment.get(comment_key)
+        #print str(comment_key)
+        #print comment
+        #print comment_key.id()
+        print comment_id
+        comment = Comment.get_by_id(int(comment_id))
+        print comment.comment
         if not self.user:
-            self.redirect('/login')
+            return self.redirect('/login')
         else:
-            self.render('editcomment.html', content=comment.content)
+            if comment:
+                self.render('editcomment.html', content=comment.comment)
+            else:
+                #self.redirect('/blog/%s'%str(post_id))
+                print "no comment"
 
     def post(self, post_id, comment_id):
         if not self.user:
             self.redirect('/blog')
-        comment_key = db.Key.from_path('Comment', int(comment_id), parent=post_key())
+        comment_key = db.Key.from_path('Comment', int(comment_id), parent=blog_key())
         comment = db.get(comment_key)
 
         if self.user.key().id() == comment.author.key().id():
