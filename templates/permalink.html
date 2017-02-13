@@ -2,6 +2,16 @@
 
 {% block content %}
   {{post.render() | safe}}
-  {{comment.render() | safe}}
+  {% if comments %}
+  {% for c in comments %}
+    <div>
+      {{ c.content }}
+    </div>
+    <div>
+      <a href="/blog/{{p.key().id()}}/editcomment/{{c.key().id()}}">Edit</a>
+      <a href="/blog/{{p.key().id()}}/deletecomment/{{c.key().id()}}">Delete</a>
+    </div>
 
+  {% endfor %}
+  {% endif %}
 {% endblock %}

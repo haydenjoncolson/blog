@@ -158,15 +158,14 @@ class PostPage(BlogHandler):
     def get(self, post_id):
         post_key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(post_key)
-        comments = Comment.all().order('-created')
-        # comment_key = db.Key.from_path('Comment', int(post_id), parent=post_key)
-        # comments = db.get(comment_key)
+        comments = Comment.all().filter('post_key =', post_key)
+
 
         if not post:
             self.error(404)
             return
 
-        self.render("permalink.html", post = post, comment = comments)
+        self.render("permalink.html", post = post, comments = comments)
 
 class NewPost(BlogHandler):
     def get(self):
@@ -252,12 +251,6 @@ class DeletePost(BlogHandler):
             db.delete(post)
         self.redirect('/blog')
 
-class Comment(db.Model):
-    post = db.ReferenceProperty(Post)
-    content = db.TextProperty(required=True)
-    created = db.DateTimeProperty(auto_now_add=True)
-    last_modified = db.DateTimeProperty(auto_now=True)
-    author =  db.ReferenceProperty(User)
 
 
 
