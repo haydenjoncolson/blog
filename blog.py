@@ -123,6 +123,8 @@ def blog_key(name = 'default'):
 
 
 
+
+
 class Post(db.Model):
     subject = db.StringProperty(required = True)
     content = db.TextProperty(required = True)
@@ -283,11 +285,13 @@ class EditComment(BlogHandler):
         #comment_key = db.Key.from_path('Comment', int(comment_id), parent=blog_key())
         #comment = Comment.get(comment_key)
         #print str(comment_key)
-        #print comment
+        #print com
         #print comment_key.id()
-        print comment_id
-        comment = Comment.get_by_id(int(comment_id))
-        print comment.comment
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+        print post_id
+        comment = Comment.get_by_id(int(comment_id), parent=post)
+
         if not self.user:
             return self.redirect('/login')
         else:
@@ -300,19 +304,21 @@ class EditComment(BlogHandler):
     def post(self, post_id, comment_id):
         if not self.user:
             self.redirect('/blog')
-        comment_key = db.Key.from_path('Comment', int(comment_id), parent=blog_key())
+        post_key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(post_key)
+        comment_key = db.Key.from_path('Comment', int(comment_id), parent=post.key())
         comment = db.get(comment_key)
 
         if self.user.key().id() == comment.author.key().id():
             content = self.request.get('content')
             author = self.user.key()
             if content:
-                c = Comment(parent=key, content=content, author=author)
+                c = Comment(parent=post, content=content, author=author)
                 c.put()
                 self.redirect('/blog/%s' % str(post_id))
             else:
                 error = 'Please enter a valid comment.'
-                self.render('editcomment.html', content=comment.content, error=error)
+                self.render('editcomment.html', content=comment.comment, error=error)
 
 class Like(db.Model):
     author = db.ReferenceProperty(User)
