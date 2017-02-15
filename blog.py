@@ -133,6 +133,7 @@ class Post(db.Model):
     #author = db.StringProperty(required=False)
     author = db.ReferenceProperty(User)
     likes = db.IntegerProperty(default=0)
+    dislikes = db.IntegerProperty(default=0)
 
 
 
@@ -252,6 +253,43 @@ class DeletePost(BlogHandler):
             db.delete(post)
         self.redirect('/blog')
 
+class LikePost(BlogHandler):
+    def get(self, post_id):
+        if not self.user:
+            error = 'You must be logged in to like this post'
+            self.render('login-form.html', error=error)
+        post_key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(post_key)
+        comments = Comment.all().filter('post =', post_key)
+        if self.user.key() == post.author.key():
+            error = 'You can not like your own post.'
+            self.render('permalink.html', post=post, comments=comments, error=error)
+        else:
+            if post:
+                post.likes += 1
+                post.put()
+                self.redirect('/blog/%s' % post_id)
+
+
+
+class DislikePost(BlogHandler):
+    def get(self, post_id):
+        if not self.user:
+            error = 'You must be logged in to dislike this post.'
+            self.render('login-form.html', error=error)
+        post_key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(post_key)
+        comments = Comment.all().filter('post =', post_key)
+        if self.user.key() == post.author.key():
+            error = 'You can not dislike your own post.'
+            self.render('permalink.html', post=post, comments=comments, error=error)
+        else:
+            if post:
+                post.dislikes += 1
+                post.put()
+                self.redirect('/blog/%s' % post_id)
+
+
 
 
 
@@ -289,7 +327,6 @@ class EditComment(BlogHandler):
         #print comment_key.id()
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
-        print post_id
         comment = Comment.get_by_id(int(comment_id), parent=post)
 
         if not self.user:
@@ -313,17 +350,41 @@ class EditComment(BlogHandler):
             content = self.request.get('content')
             author = self.user.key()
             if content:
-                c = Comment(parent=post, content=content, author=author)
-                c.put()
+                comment.content = content
+                comment.put()
                 self.redirect('/blog/%s' % str(post_id))
             else:
                 error = 'Please enter a valid comment.'
                 self.render('editcomment.html', content=comment.content, error=error)
 
-class Like(db.Model):
-    author = db.ReferenceProperty(User)
-    post = db.ReferenceProperty(Post)
-    likes = db.IntegerProperty()
+class DeleteComment(BlogHandler):
+    def get(self, post_id, comment_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+        comment = Comment.get_by_id(int(comment_id), parent=post)
+        if not comment:
+            self.error(404)
+            return
+        if self.user:
+            self.render("deletecomment.html", post=comment)
+        else:
+            error = 'You must be logged in to delete this comment.'
+            self.render('login-form.html', error=error)
+
+    def post(self, post_id, comment_id):
+        if not self.user:
+            self.redirect('/login')
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+        comment = Comment.get_by_id(int(comment_id), parent=post)
+
+        if comment and (comment.author.key() == self.user.key()):
+            db.delete(comment)
+        return self.redirect('/blog/%s' % post_id)
+
+
+
+
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 def valid_username(username):
@@ -417,11 +478,11 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                ('/blog/newpost', NewPost),
                                ('/blog/editpost/([0-9]+)', EditPost),
                                ('/blog/deletepost/([0-9]+)', DeletePost),
-                              # ('/blog/likepost/([0-9]+)', LikePost),
-                              # ('/blog/unlikepost/([0-9]+)', UnlikePost),
+                               ('/blog/([0-9]+)/like/', LikePost),
+                               ('/blog/([0-9]+)/dislike/', DislikePost),
                                ('/blog/([0-9]+)/newcomment/', CreateComment),
                                ('/blog/([0-9]+)/editcomment/([0-9]+)', EditComment),
-                              # ('/blog/([0-9]+)/deletecomment/([0-9]+)', DeleteComment),
+                               ('/blog/([0-9]+)/deletecomment/([0-9]+)', DeleteComment),
                                ('/signup', Register),
                                ('/login', Login),
                                ('/logout', Logout)

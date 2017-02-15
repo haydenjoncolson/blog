@@ -7,7 +7,7 @@
 
   {% for c in comments %}
     <div>
-      {{ c.comment }}
+      {{ c.content }}
     </div>
     <div>
       <a href="/blog/{{c.post.key().id()}}/editcomment/{{c.key().id()}}">Edit</a>
