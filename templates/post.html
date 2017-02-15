@@ -6,9 +6,12 @@
               <p>{{p._render_text | safe}}</p>
               <span class="right">{{p.author.name}}</span>
             </div>
+
             <div class="card-action">
+              {% if self.user == p.author%}
               <a href="/blog/editpost/{{p.key().id()}}">Edit</a>
               <a href="/blog/deletepost/{{p.key().id()}}">Delete</a>
+              {% endif %}
               <a href="/blog/{{p.key().id()}}/newcomment/">Comment</a>
               <a href="/blog/{{p.key().id()}}/like/">Like</a>
               <a href="/blog/{{p.key().id()}}/dislike/">Dislike</a>

@@ -257,7 +257,7 @@ class LikePost(BlogHandler):
     def get(self, post_id):
         if not self.user:
             error = 'You must be logged in to like this post'
-            self.render('login-form.html', error=error)
+            return self.render('login-form.html', error=error)
         post_key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(post_key)
         comments = Comment.all().filter('post =', post_key)
@@ -276,7 +276,7 @@ class DislikePost(BlogHandler):
     def get(self, post_id):
         if not self.user:
             error = 'You must be logged in to dislike this post.'
-            self.render('login-form.html', error=error)
+            return self.render('login-form.html', error=error)
         post_key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(post_key)
         comments = Comment.all().filter('post =', post_key)
