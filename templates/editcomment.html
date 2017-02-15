@@ -3,7 +3,7 @@
 {% block content %}
 <h2>Comment</h2>
 <form method="post">
-  <textarea rows="5" cols="50" class ="content" name="comment">{{content | safe}}</textarea>
+  <textarea rows="5" cols="50" type="text" name="content">{{content | safe}}</textarea>
   <div>
     <input type="submit" name="submit"></input>
     <a href="/blog" role = "button">Back</a>

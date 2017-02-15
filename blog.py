@@ -143,7 +143,7 @@ class Post(db.Model):
 
 class Comment(db.Model):
     post = db.ReferenceProperty(Post)
-    comment = db.TextProperty(required=True)
+    content = db.TextProperty(required=True)
     created = db.DateTimeProperty(auto_now_add=True)
     last_modified = db.DateTimeProperty(auto_now=True)
     author =  db.ReferenceProperty(User)
@@ -273,12 +273,12 @@ class CreateComment(BlogHandler):
         content = self.request.get('content')
         author = self.user.key()
         if content:
-            c = Comment(parent=key, post=key, comment=content, author=author)
+            c = Comment(parent=key, post=key, content=content, author=author)
             c.put()
             self.redirect('/blog/%s' % str(post_id))
         else:
             error = 'Please enter a valid comment.'
-            self.render('addcomment.html', content=content, error=error)
+            self.render('addcomment.html', comment=content, error=error)
 
 class EditComment(BlogHandler):
     def get(self, post_id, comment_id):
@@ -296,7 +296,7 @@ class EditComment(BlogHandler):
             return self.redirect('/login')
         else:
             if comment:
-                self.render('editcomment.html', content=comment.comment)
+                self.render('editcomment.html', content=comment.content)
             else:
                 #self.redirect('/blog/%s'%str(post_id))
                 print "no comment"
@@ -318,7 +318,7 @@ class EditComment(BlogHandler):
                 self.redirect('/blog/%s' % str(post_id))
             else:
                 error = 'Please enter a valid comment.'
-                self.render('editcomment.html', content=comment.comment, error=error)
+                self.render('editcomment.html', content=comment.content, error=error)
 
 class Like(db.Model):
     author = db.ReferenceProperty(User)
