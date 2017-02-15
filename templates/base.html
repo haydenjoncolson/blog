@@ -2,136 +2,37 @@
 <html>
 <head>
   <link type="text/css" rel="stylesheet" href="/static/main.css" />
-  <style>body {
-      position: relative;
-      font-family: Helvetica, Arial, sans-serif;
-      font-size: 14px;
 
-      width: 800px;
-      margin: 0 auto;
-      padding: 10px;
-      color: #333;
-  }
-
-
-
-  .login-area {
-      font-size: 13px;
-      color: gray;
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      margin-bottom: 1em;
-  }
-
-  .link {
-      color: gray;
-      text-decoration: none;
-  }
-
-  .link:visited {
-      color: gray;
-  }
-
-  .link:hover {
-      text-decoration: underline;
-  }
-
-  h2 {
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 20px;
-  }
-
-  .error {
-      color: red;
-  }
-
-  label {
-    display: block;
-    font-size: 20px;
-  }
-
-  label + label {
-      margin-top: 20px;
-  }
-
-  input[type=text] {
-      width: 500px;
-      font-size: 20px;
-      padding: 2px;
-      font-family: monospace;
-  }
-
-  textarea {
-    width: 500px;
-    height: 400px;
-    font-size: 17px;
-    font-family: monospace;
-  }
-
-  input[type=submit] {
-    font-size: 24px;
-  }
-
-  .main-title {
-      display: block;
-      color: #222;
-      font-size: 40px;
-      font-weight: bold;
-      text-align: center;
-      margin-bottom: 30px;
-      text-decoration: none;
-  }
-
-  .post + .post {
-      margin-top: 15px;
-  }
-
-  .post-heading {
-      position: relative;
-      border-bottom: 3px solid #666;
-  }
-
-  .post-title {
-      font-size: 24px;
-      font-weight: bold;
-  }
-
-  .post-date {
-      position: absolute;
-      right: 0px;
-      bottom: 0px;
-      color: #999;
-
-  }
-
-  .post-content {
-      margin-top: 5px;
-  }
-  .post-author {
-    font-size: 12px;
-    font-weight: normal;
-
-  }
-</style>
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
   <title>MUMB</title>
 </head>
 
 <body>
-  <a href="/blog" class="main-title">
-    MUMB
-  </a>
 
-  <div class="login-area">
-    {% if user %}
-      {{user.name}} (<a class="link" href="/logout">logout</a>) (<a class="link" href="/blog/newpost">New post</a>)
-    {% else %}
-      <a class="link" href="/login">login</a>
-      |
-      <a class="link" href="/signup">signup</a>
-    {% endif %}
-  </div>
+
+
+
+
+  <nav>
+    <div class="nav-wrapper">
+      <a href="/blog" class="brand-logo">MUMB</a>
+      <ul id="nav-mobile" class="right">
+        {% if user %}
+        <li class="hide-on-med-and-down">({{user.name}})</li>
+        <li><a class="link" href="/logout">Logout</a></li>
+        <li><a class="link" href="/blog/newpost">New Post</a></li>
+        {% else %}
+        <li><a class="link" href="/login">Login</a></li>
+        <li><a class="link" href="/signup">Signup</a></li>
+
+        {% endif %}
+
+
+      </ul>
+    </div>
+  </nav>
+
 
   <div id="content">
   {% if error %}
@@ -140,6 +41,13 @@
   {% block content %}
   {% endblock %}
   </div>
+
+
+  <!--Import jQuery before materialize.js-->
+  <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <!-- Compiled and minified JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
+
 </body>
 
 </html>

@@ -3,43 +3,45 @@
 <html>
   <head>
     <title>Login</title>
-    <style type="text/css">
-      .label {text-align: right}
-      .error {color: red}
-    </style>
+    <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
+
 
   </head>
 
   <body>
     <a class="link" href="/signup">Sign Up</a>
     <h2>Login</h2>
-    <form method="post">
-      <table>
-        <tr>
-          <td class="label">
-            Username
-          </td>
-          <td>
-            <input type="text" name="username" value="{{username}}">
-          </td>
-        </tr>
 
-        <tr>
-          <td class="label">
-            Password
-          </td>
-          <td>
-            <input type="password" name="password" value="">
-          </td>
-        </tr>
-      </table>
 
-      <div class="error">
-        {{error}}
+    <div class="row">
+        <form class="col s12" method="post">
+          <div class="row">
+            <div class="input-field col s6">
+              <input id="user_name" type="text" class="validate" name="username" value="{{username}}">
+              <label for="user_name">Username</label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="input-field col s12">
+              <input id="password" type="password" class="validate" name="password" value="">
+              <label for="password">Password</label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="error">
+              {{error}}
+            </div>
+          </div>
+          <div class="row">
+            <input type="submit">
+          </div>
+        </form>
       </div>
-
-      <input type="submit">
-    </form>
+      <!--Import jQuery before materialize.js-->
+      <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+      <!-- Compiled and minified JavaScript -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
   </body>
 
 </html>
