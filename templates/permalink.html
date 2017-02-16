@@ -15,7 +15,7 @@
               <span class="card-title">{{c.author.name}}</span>
               <p>{{ c.content }}</p>
             </div>
-            {% if self.user == post.author %}
+            {% if user.name == c.author.name %}
             <div class="card-action">
               <a href="/blog/{{c.post.key().id()}}/editcomment/{{c.key().id()}}">Edit</a>
               <a href="/blog/{{c.post.key().id()}}/deletecomment/{{c.key().id()}}">Delete</a>
