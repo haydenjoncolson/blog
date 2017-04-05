@@ -4,7 +4,7 @@ This blog was built as a project for Udacity's Full Stack Nanodegree.
 
 ## Live Version
 
-You can view the live version [here](https://hjc-blog.appspot.com)
+You can view the live version [here](https://hjc-blog.appspot.com/blog)
 
 
 ## Installation
